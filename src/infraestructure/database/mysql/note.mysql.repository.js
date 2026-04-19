@@ -1,32 +1,21 @@
-import { DataTypes } from "sequelize";
-
-import sequelize from "./connection.js";
-
-const NoteModel = sequelize.define("Note", {
-    title: { type: DataTypes.STRING, allowNull: false },
-    content: { type: DataTypes.TEXT, allowNull: false },
-    imageUrl: { type: DataTypes.STRING },
-    isPrivate: { type: DataTypes.BOOLEAN, defaultValue: false },
-    password: { type: DataTypes.STRING },
-    userId: { type: DataTypes.STRING, allowNull: false }
-
-}, { timestamps: true });
+import NoteModel from "./note.model.mysql.js";
 
 export default class NoteMySQLRepository {
     async save(noteEntity) {
-        const note = await NoteModel.create({
 
+        const note = await NoteModel.create({
             title: noteEntity.title,
             content: noteEntity.content,
             imageUrl: noteEntity.imageUrl,
             isPrivate: noteEntity.isPrivate,
             password: noteEntity.password,
-            userId: noteEntity.userid
+            userId: noteEntity.userId
         });
         return note.toJSON();
     }
-    async findByUserId(userId) {
-        return await NoteModel.findAll({ where: { userId } });
-    }
 
+    async findByUserId(userId) {
+        const notes = await NoteModel.findAll({ where: { userId } });
+        return notes.map(n => n.toJSON());
+    }
 }
