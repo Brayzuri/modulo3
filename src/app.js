@@ -1,31 +1,47 @@
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan'
+import 'express-async-errors';
+import morgan from 'morgan';
+import { loggerMiddleware } from './presentation/middlewares/logger.middleware.js';
+import noteRoutes from './presentation/routes/note.routes.js';
+import authRoutes from './presentation/routes/auth.routes.js';
+import { connectMongo } from './infrastructure/database/mongo/connection.js';
+import { connectMysql } from './infrastructure/database/mysql/connection.js';
+import { setupSwagger } from './infrastructure/config/swagger.config.js';
+
+await connectMongo();
+await connectMysql();
 
 const app = express();
 
-
 app.use(cors());
 app.use(express.json());
+setupSwagger(app);
+app.use(loggerMiddleware);
 app.use(morgan('dev'));
 
-//imagenes Estaticas
+//imagenes estaticas
 app.use('/uploads', express.static('uploads'));
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/notes', noteRoutes);
 
-app.get('/api/healt', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'API de notas activa' });
 });
 
-//midlewere de manejo d eerrores 
-app.use((err, req, res, next) => {
-    console.log(err.stack);
-    res.status(500).json({ error: 'Error interno en el servidor' });
 
-})
+
+
+//midleware de manejo de errores global
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Error interno del servidor' });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
-
-})
+});
